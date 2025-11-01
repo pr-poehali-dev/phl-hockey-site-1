@@ -403,161 +403,6 @@ const AdminPanel = () => {
   );
 };
 
-const TeamDialog = ({ team, onSave }: { team?: Team; onSave: (data: any) => void }) => {
-  const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState(team || {
-    name: '', division: 'ПХЛ', games_played: 0, wins: 0, wins_ot: 0,
-    losses_ot: 0, losses: 0, goals_for: 0, goals_against: 0, points: 0, logo_url: ''
-  });
-
-  const handleSave = () => {
-    onSave(formData);
-    setOpen(false);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {team ? (
-          <Button size="sm" variant="outline"><Icon name="Pencil" size={16} /></Button>
-        ) : (
-          <Button><Icon name="Plus" size={18} className="mr-2" />Добавить команду</Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{team ? 'Редактировать команду' : 'Добавить команду'}</DialogTitle>
-        </DialogHeader>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Название</Label>
-            <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-          </div>
-          <div>
-            <Label>Дивизион</Label>
-            <Select value={formData.division} onValueChange={(val) => setFormData({ ...formData, division: val })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ПХЛ">ПХЛ</SelectItem>
-                <SelectItem value="ВХЛ">ВХЛ</SelectItem>
-                <SelectItem value="ТХЛ">ТХЛ</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {['games_played', 'wins', 'wins_ot', 'losses_ot', 'losses', 'goals_for', 'goals_against', 'points'].map((field) => (
-            <div key={field}>
-              <Label>{field === 'games_played' ? 'И' : field === 'wins' ? 'В' : field === 'wins_ot' ? 'ВО' : field === 'losses_ot' ? 'ПО' : field === 'losses' ? 'П' : field === 'goals_for' ? 'Ш' : field === 'goals_against' ? 'Пр' : 'О'}</Label>
-              <Input type="number" value={formData[field as keyof typeof formData]} onChange={(e) => setFormData({ ...formData, [field]: parseInt(e.target.value) || 0 })} />
-            </div>
-          ))}
-          <div className="col-span-2">
-            <Label>Логотип команды</Label>
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    setFormData({ ...formData, logo_url: reader.result as string });
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }}
-            />
-            {formData.logo_url && (
-              <img src={formData.logo_url} alt="Logo" className="mt-2 w-16 h-16 object-contain" />
-            )}
-          </div>
-        </div>
-        <Button onClick={handleSave} className="w-full">Сохранить</Button>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-const MatchDialog = ({ teams, match, onSave }: { teams: Team[]; match?: Match; onSave: (data: any) => void }) => {
-  const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState(match || {
-    match_date: new Date().toISOString().slice(0, 16),
-    home_team_id: 0, away_team_id: 0, home_score: 0, away_score: 0, status: 'Не начался'
-  });
-
-  const handleSave = () => {
-    onSave(formData);
-    setOpen(false);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {match ? (
-          <Button size="sm" variant="outline"><Icon name="Pencil" size={16} /></Button>
-        ) : (
-          <Button><Icon name="Plus" size={18} className="mr-2" />Добавить матч</Button>
-        )}
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{match ? 'Редактировать матч' : 'Добавить матч'}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <Label>Дата и время</Label>
-            <Input type="datetime-local" value={formData.match_date.slice(0, 16)} onChange={(e) => setFormData({ ...formData, match_date: e.target.value })} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Команда хозяев</Label>
-              <Select value={String(formData.home_team_id)} onValueChange={(val) => setFormData({ ...formData, home_team_id: parseInt(val) })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {teams.map(t => <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Команда гостей</Label>
-              <Select value={String(formData.away_team_id)} onValueChange={(val) => setFormData({ ...formData, away_team_id: parseInt(val) })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {teams.map(t => <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Счет хозяев</Label>
-              <Input type="number" value={formData.home_score} onChange={(e) => setFormData({ ...formData, home_score: parseInt(e.target.value) || 0 })} />
-            </div>
-            <div>
-              <Label>Счет гостей</Label>
-              <Input type="number" value={formData.away_score} onChange={(e) => setFormData({ ...formData, away_score: parseInt(e.target.value) || 0 })} />
-            </div>
-          </div>
-          <div>
-            <Label>Статус</Label>
-            <Select value={formData.status} onValueChange={(val) => setFormData({ ...formData, status: val })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Не начался">Не начался</SelectItem>
-                <SelectItem value="Матч идет">Матч идет</SelectItem>
-                <SelectItem value="Конец матча">Конец матча</SelectItem>
-                <SelectItem value="Конец матча (ОТ)">Конец матча (ОТ)</SelectItem>
-                <SelectItem value="Конец матча (Б)">Конец матча (Б)</SelectItem>
-                <SelectItem value="Техническое поражение">Техническое поражение</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <Button onClick={handleSave} className="w-full">Сохранить</Button>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
 const SocialLinksManager = ({ socialLinks, onUpdate }: { socialLinks: any[]; onUpdate: (links: any[]) => void }) => {
   const [links, setLinks] = useState(socialLinks);
   const [newLink, setNewLink] = useState({ platform: '', url: '', icon: 'Link' });
@@ -645,6 +490,176 @@ const SocialLinksManager = ({ socialLinks, onUpdate }: { socialLinks: any[]; onU
         Добавить ссылку
       </Button>
     </div>
+  );
+};
+
+const TeamDialog = ({ team, onSave }: { team?: Team; onSave: (data: any) => void }) => {
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState(team || {
+    name: '', division: 'ПХЛ', games_played: 0, wins: 0, wins_ot: 0,
+    losses_ot: 0, losses: 0, goals_for: 0, goals_against: 0, points: 0, logo_url: ''
+  });
+
+  const handleSave = () => {
+    onSave(formData);
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {team ? (
+          <Button size="sm" variant="outline"><Icon name="Pencil" size={16} /></Button>
+        ) : (
+          <Button><Icon name="Plus" size={18} className="mr-2" />Добавить команду</Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{team ? 'Редактировать команду' : 'Добавить команду'}</DialogTitle>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Название</Label>
+            <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+          </div>
+          <div>
+            <Label>Дивизион</Label>
+            <Select value={formData.division} onValueChange={(val) => setFormData({ ...formData, division: val })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ПХЛ">ПХЛ</SelectItem>
+                <SelectItem value="ВХЛ">ВХЛ</SelectItem>
+                <SelectItem value="ТХЛ">ТХЛ</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {['games_played', 'wins', 'wins_ot', 'losses_ot', 'losses', 'goals_for', 'goals_against', 'points'].map((field) => (
+            <div key={field}>
+              <Label>{field === 'games_played' ? 'И' : field === 'wins' ? 'В' : field === 'wins_ot' ? 'ВО' : field === 'losses_ot' ? 'ПО' : field === 'losses' ? 'П' : field === 'goals_for' ? 'Ш' : field === 'goals_against' ? 'Пр' : 'О'}</Label>
+              <Input type="number" value={formData[field as keyof typeof formData]} onChange={(e) => setFormData({ ...formData, [field]: parseInt(e.target.value) || 0 })} />
+            </div>
+          ))}
+          <div className="col-span-2">
+            <Label>Логотип команды</Label>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    setFormData({ ...formData, logo_url: reader.result as string });
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+            />
+            {formData.logo_url && (
+              <img src={formData.logo_url} alt="Logo" className="mt-2 w-16 h-16 object-contain" />
+            )}
+          </div>
+        </div>
+        <Button onClick={handleSave} className="w-full">Сохранить</Button>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const MatchDialog = ({ teams, match, onSave }: { teams: Team[]; match?: Match; onSave: (data: any) => void }) => {
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState(match || {
+    match_date: new Date().toISOString().slice(0, 16),
+    home_team_id: teams.length > 0 ? teams[0].id : 0, 
+    away_team_id: teams.length > 1 ? teams[1].id : 0, 
+    home_score: 0, 
+    away_score: 0, 
+    status: 'Не начался'
+  });
+
+  const handleSave = () => {
+    if (!formData.home_team_id || !formData.away_team_id) {
+      return;
+    }
+    onSave(formData);
+    setOpen(false);
+    setFormData({
+      match_date: new Date().toISOString().slice(0, 16),
+      home_team_id: teams.length > 0 ? teams[0].id : 0,
+      away_team_id: teams.length > 1 ? teams[1].id : 0,
+      home_score: 0,
+      away_score: 0,
+      status: 'Не начался'
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {match ? (
+          <Button size="sm" variant="outline"><Icon name="Pencil" size={16} /></Button>
+        ) : (
+          <Button><Icon name="Plus" size={18} className="mr-2" />Добавить матч</Button>
+        )}
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{match ? 'Редактировать матч' : 'Добавить матч'}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>Дата и время</Label>
+            <Input type="datetime-local" value={formData.match_date.slice(0, 16)} onChange={(e) => setFormData({ ...formData, match_date: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Команда хозяев</Label>
+              <Select value={String(formData.home_team_id)} onValueChange={(val) => setFormData({ ...formData, home_team_id: parseInt(val) })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {teams.map(t => <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Команда гостей</Label>
+              <Select value={String(formData.away_team_id)} onValueChange={(val) => setFormData({ ...formData, away_team_id: parseInt(val) })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {teams.map(t => <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Счет хозяев</Label>
+              <Input type="number" value={formData.home_score} onChange={(e) => setFormData({ ...formData, home_score: parseInt(e.target.value) || 0 })} />
+            </div>
+            <div>
+              <Label>Счет гостей</Label>
+              <Input type="number" value={formData.away_score} onChange={(e) => setFormData({ ...formData, away_score: parseInt(e.target.value) || 0 })} />
+            </div>
+          </div>
+          <div>
+            <Label>Статус</Label>
+            <Select value={formData.status} onValueChange={(val) => setFormData({ ...formData, status: val })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Не начался">Не начался</SelectItem>
+                <SelectItem value="Матч идет">Матч идет</SelectItem>
+                <SelectItem value="Конец матча">Конец матча</SelectItem>
+                <SelectItem value="Конец матча (ОТ)">Конец матча (ОТ)</SelectItem>
+                <SelectItem value="Конец матча (Б)">Конец матча (Б)</SelectItem>
+                <SelectItem value="Техническое поражение">Техническое поражение</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <Button onClick={handleSave} className="w-full">Сохранить</Button>
+      </DialogContent>
+    </Dialog>
   );
 };
 
