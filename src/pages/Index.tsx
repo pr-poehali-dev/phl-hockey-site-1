@@ -19,6 +19,7 @@ interface Team {
   goals_for: number;
   goals_against: number;
   points: number;
+  logo_url?: string;
 }
 
 interface Match {
@@ -34,7 +35,7 @@ interface Match {
 interface LeagueInfo {
   league_name: string;
   description: string;
-  social_links: Array<{ id: number; platform: string; url: string }>;
+  social_links: Array<{ id: number; platform: string; url: string; icon: string }>;
 }
 
 const Index = () => {
@@ -109,7 +110,7 @@ const Index = () => {
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-80 transition-opacity"
               >
-                <Icon name="Link" size={18} />
+                <Icon name={link.icon || 'Link'} size={18} />
                 {link.platform}
               </a>
             ))}
@@ -152,7 +153,14 @@ const Index = () => {
                         {getDivisionTeams(division).map((team, index) => (
                           <TableRow key={team.id} className="hover:bg-muted/50">
                             <TableCell className="font-medium">{index + 1}</TableCell>
-                            <TableCell className="font-medium">{team.name}</TableCell>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                {team.logo_url && (
+                                  <img src={team.logo_url} alt={team.name} className="w-6 h-6 object-contain" />
+                                )}
+                                {team.name}
+                              </div>
+                            </TableCell>
                             <TableCell className="text-center">{team.games_played}</TableCell>
                             <TableCell className="text-center">{team.wins}</TableCell>
                             <TableCell className="text-center">{team.wins_ot}</TableCell>

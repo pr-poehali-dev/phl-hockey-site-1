@@ -26,6 +26,7 @@ interface Team {
   goals_for: number;
   goals_against: number;
   points: number;
+  logo_url?: string;
 }
 
 interface Match {
@@ -45,7 +46,7 @@ const AdminPanel = () => {
   const [password, setPassword] = useState('');
   const [teams, setTeams] = useState<Team[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [leagueInfo, setLeagueInfo] = useState({ league_name: 'PHL', description: '', social_links: [] });
+  const [leagueInfo, setLeagueInfo] = useState<any>({ league_name: 'PHL', description: '', logo_url: null, social_links: [] });
   const [regulations, setRegulations] = useState('');
   const { toast } = useToast();
 
@@ -259,6 +260,33 @@ const AdminPanel = () => {
                   rows={4}
                 />
               </div>
+              <div>
+                <Label>Логотип лиги</Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setLeagueInfo({ ...leagueInfo, logo_url: reader.result as string });
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+                {leagueInfo.logo_url && (
+                  <img src={leagueInfo.logo_url} alt="Logo" className="mt-2 w-20 h-20 object-contain" />
+                )}
+              </div>
+              <div>
+                <Label>Социальные сети</Label>
+                <SocialLinksManager 
+                  socialLinks={leagueInfo.social_links || []} 
+                  onUpdate={(links) => setLeagueInfo({ ...leagueInfo, social_links: links })}
+                />
+              </div>
               <Button onClick={saveLeagueInfo}>
                 <Icon name="Save" size={18} className="mr-2" />
                 Сохранить
@@ -379,7 +407,7 @@ const TeamDialog = ({ team, onSave }: { team?: Team; onSave: (data: any) => void
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState(team || {
     name: '', division: 'ПХЛ', games_played: 0, wins: 0, wins_ot: 0,
-    losses_ot: 0, losses: 0, goals_for: 0, goals_against: 0, points: 0
+    losses_ot: 0, losses: 0, goals_for: 0, goals_against: 0, points: 0, logo_url: ''
   });
 
   const handleSave = () => {
@@ -422,6 +450,26 @@ const TeamDialog = ({ team, onSave }: { team?: Team; onSave: (data: any) => void
               <Input type="number" value={formData[field as keyof typeof formData]} onChange={(e) => setFormData({ ...formData, [field]: parseInt(e.target.value) || 0 })} />
             </div>
           ))}
+          <div className="col-span-2">
+            <Label>Логотип команды</Label>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    setFormData({ ...formData, logo_url: reader.result as string });
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+            />
+            {formData.logo_url && (
+              <img src={formData.logo_url} alt="Logo" className="mt-2 w-16 h-16 object-contain" />
+            )}
+          </div>
         </div>
         <Button onClick={handleSave} className="w-full">Сохранить</Button>
       </DialogContent>
@@ -507,6 +555,96 @@ const MatchDialog = ({ teams, match, onSave }: { teams: Team[]; match?: Match; o
         <Button onClick={handleSave} className="w-full">Сохранить</Button>
       </DialogContent>
     </Dialog>
+  );
+};
+
+const SocialLinksManager = ({ socialLinks, onUpdate }: { socialLinks: any[]; onUpdate: (links: any[]) => void }) => {
+  const [links, setLinks] = useState(socialLinks);
+  const [newLink, setNewLink] = useState({ platform: '', url: '', icon: 'Link' });
+  const { toast } = useToast();
+
+  const addLink = async () => {
+    if (!newLink.platform || !newLink.url) {
+      toast({ title: 'Ошибка', description: 'Заполните все поля', variant: 'destructive' });
+      return;
+    }
+    try {
+      await fetch(`${API_URL}?path=social-links`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newLink)
+      });
+      const updatedLinks = [...links, newLink];
+      setLinks(updatedLinks);
+      onUpdate(updatedLinks);
+      setNewLink({ platform: '', url: '', icon: 'Link' });
+      toast({ title: 'Успешно', description: 'Ссылка добавлена' });
+    } catch (error) {
+      toast({ title: 'Ошибка', variant: 'destructive' });
+    }
+  };
+
+  const deleteLink = async (id: number) => {
+    try {
+      await fetch(`${API_URL}?path=social-links&id=${id}`, { method: 'DELETE' });
+      const updatedLinks = links.filter(l => l.id !== id);
+      setLinks(updatedLinks);
+      onUpdate(updatedLinks);
+      toast({ title: 'Успешно', description: 'Ссылка удалена' });
+    } catch (error) {
+      toast({ title: 'Ошибка', variant: 'destructive' });
+    }
+  };
+
+  const iconOptions = [
+    { value: 'MessageCircle', label: 'Telegram' },
+    { value: 'Send', label: 'Discord' },
+    { value: 'Twitch', label: 'Twitch' },
+    { value: 'Youtube', label: 'YouTube' },
+    { value: 'Facebook', label: 'Facebook' },
+    { value: 'Instagram', label: 'Instagram' },
+    { value: 'Twitter', label: 'Twitter' },
+    { value: 'Link', label: 'Другое' }
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        {links.map((link) => (
+          <div key={link.id} className="flex items-center gap-2 p-2 border rounded">
+            <Icon name={link.icon || 'Link'} size={18} />
+            <span className="flex-1">{link.platform}: {link.url}</span>
+            <Button size="sm" variant="destructive" onClick={() => deleteLink(link.id)}>
+              <Icon name="Trash2" size={16} />
+            </Button>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <Input
+          placeholder="Название"
+          value={newLink.platform}
+          onChange={(e) => setNewLink({ ...newLink, platform: e.target.value })}
+        />
+        <Input
+          placeholder="URL"
+          value={newLink.url}
+          onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
+        />
+        <Select value={newLink.icon} onValueChange={(val) => setNewLink({ ...newLink, icon: val })}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {iconOptions.map(opt => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <Button onClick={addLink} size="sm">
+        <Icon name="Plus" size={16} className="mr-2" />
+        Добавить ссылку
+      </Button>
+    </div>
   );
 };
 
