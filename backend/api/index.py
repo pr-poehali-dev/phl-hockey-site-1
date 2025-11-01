@@ -1,0 +1,193 @@
+'''
+Business: API для хоккейного сайта - получение и управление данными о лиге, командах, матчах
+Args: event - dict с httpMethod, body, queryStringParameters
+Returns: HTTP response dict с данными или ошибкой
+'''
+import json
+import os
+from typing import Dict, Any
+import psycopg2
+from psycopg2.extras import RealDictCursor
+
+def get_db_connection():
+    database_url = os.environ.get('DATABASE_URL')
+    return psycopg2.connect(database_url, cursor_factory=RealDictCursor)
+
+def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    method: str = event.get('httpMethod', 'GET')
+    path: str = event.get('queryStringParameters', {}).get('path', '')
+    
+    if method == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token',
+                'Access-Control-Max-Age': '86400'
+            },
+            'body': ''
+        }
+    
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        if method == 'GET':
+            if path == 'league-info':
+                cur.execute('SELECT * FROM league_info ORDER BY id DESC LIMIT 1')
+                data = cur.fetchone()
+                cur.execute('SELECT * FROM social_links ORDER BY sort_order')
+                social_links = cur.fetchall()
+                result = dict(data) if data else {}
+                result['social_links'] = [dict(row) for row in social_links]
+                
+            elif path == 'teams':
+                division = event.get('queryStringParameters', {}).get('division')
+                if division:
+                    cur.execute('SELECT * FROM teams WHERE division = %s ORDER BY points DESC, goals_for - goals_against DESC', (division,))
+                else:
+                    cur.execute('SELECT * FROM teams ORDER BY division, points DESC')
+                result = [dict(row) for row in cur.fetchall()]
+                
+            elif path == 'matches':
+                cur.execute('''
+                    SELECT m.*, 
+                           ht.name as home_team_name, 
+                           at.name as away_team_name
+                    FROM matches m
+                    LEFT JOIN teams ht ON m.home_team_id = ht.id
+                    LEFT JOIN teams at ON m.away_team_id = at.id
+                    ORDER BY m.match_date DESC
+                ''')
+                result = [dict(row) for row in cur.fetchall()]
+                
+            elif path == 'regulations':
+                cur.execute('SELECT * FROM regulations ORDER BY id DESC LIMIT 1')
+                data = cur.fetchone()
+                result = dict(data) if data else {'content': 'Регламент скоро появится'}
+                
+            else:
+                result = {'error': 'Unknown path'}
+                
+        elif method == 'POST':
+            body_data = json.loads(event.get('body', '{}'))
+            
+            if path == 'league-info':
+                cur.execute('UPDATE league_info SET league_name = %s, description = %s, updated_at = CURRENT_TIMESTAMP WHERE id = 1',
+                           (body_data.get('league_name'), body_data.get('description')))
+                conn.commit()
+                result = {'success': True}
+                
+            elif path == 'social-links':
+                cur.execute('INSERT INTO social_links (platform, url, sort_order) VALUES (%s, %s, %s)',
+                           (body_data.get('platform'), body_data.get('url'), body_data.get('sort_order', 0)))
+                conn.commit()
+                result = {'success': True}
+                
+            elif path == 'teams':
+                cur.execute('''INSERT INTO teams (name, division, games_played, wins, wins_ot, losses_ot, 
+                               losses, goals_for, goals_against, points) 
+                               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                           (body_data.get('name'), body_data.get('division'), 
+                            body_data.get('games_played', 0), body_data.get('wins', 0),
+                            body_data.get('wins_ot', 0), body_data.get('losses_ot', 0),
+                            body_data.get('losses', 0), body_data.get('goals_for', 0),
+                            body_data.get('goals_against', 0), body_data.get('points', 0)))
+                conn.commit()
+                result = {'success': True}
+                
+            elif path == 'matches':
+                cur.execute('''INSERT INTO matches (match_date, home_team_id, away_team_id, 
+                               home_score, away_score, status) 
+                               VALUES (%s, %s, %s, %s, %s, %s)''',
+                           (body_data.get('match_date'), body_data.get('home_team_id'),
+                            body_data.get('away_team_id'), body_data.get('home_score', 0),
+                            body_data.get('away_score', 0), body_data.get('status', 'Не начался')))
+                conn.commit()
+                result = {'success': True}
+                
+            elif path == 'regulations':
+                cur.execute('UPDATE regulations SET content = %s, updated_at = CURRENT_TIMESTAMP WHERE id = 1',
+                           (body_data.get('content'),))
+                conn.commit()
+                result = {'success': True}
+                
+            else:
+                result = {'error': 'Unknown path'}
+                
+        elif method == 'PUT':
+            body_data = json.loads(event.get('body', '{}'))
+            item_id = body_data.get('id')
+            
+            if path == 'teams':
+                cur.execute('''UPDATE teams SET name = %s, division = %s, games_played = %s, 
+                               wins = %s, wins_ot = %s, losses_ot = %s, losses = %s, 
+                               goals_for = %s, goals_against = %s, points = %s WHERE id = %s''',
+                           (body_data.get('name'), body_data.get('division'),
+                            body_data.get('games_played'), body_data.get('wins'),
+                            body_data.get('wins_ot'), body_data.get('losses_ot'),
+                            body_data.get('losses'), body_data.get('goals_for'),
+                            body_data.get('goals_against'), body_data.get('points'), item_id))
+                conn.commit()
+                result = {'success': True}
+                
+            elif path == 'matches':
+                cur.execute('''UPDATE matches SET match_date = %s, home_team_id = %s, 
+                               away_team_id = %s, home_score = %s, away_score = %s, status = %s 
+                               WHERE id = %s''',
+                           (body_data.get('match_date'), body_data.get('home_team_id'),
+                            body_data.get('away_team_id'), body_data.get('home_score'),
+                            body_data.get('away_score'), body_data.get('status'), item_id))
+                conn.commit()
+                result = {'success': True}
+                
+            else:
+                result = {'error': 'Unknown path'}
+                
+        elif method == 'DELETE':
+            item_id = event.get('queryStringParameters', {}).get('id')
+            
+            if path == 'teams':
+                cur.execute('DELETE FROM teams WHERE id = %s', (item_id,))
+                conn.commit()
+                result = {'success': True}
+                
+            elif path == 'matches':
+                cur.execute('DELETE FROM matches WHERE id = %s', (item_id,))
+                conn.commit()
+                result = {'success': True}
+                
+            elif path == 'social-links':
+                cur.execute('DELETE FROM social_links WHERE id = %s', (item_id,))
+                conn.commit()
+                result = {'success': True}
+                
+            else:
+                result = {'error': 'Unknown path'}
+        else:
+            result = {'error': 'Method not allowed'}
+            
+        cur.close()
+        conn.close()
+        
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'isBase64Encoded': False,
+            'body': json.dumps(result, ensure_ascii=False, default=str)
+        }
+        
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'isBase64Encoded': False,
+            'body': json.dumps({'error': str(e)}, ensure_ascii=False)
+        }

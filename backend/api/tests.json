@@ -1,0 +1,21 @@
+{
+  "tests": [
+    {
+      "name": "Get league info",
+      "method": "GET",
+      "path": "/?path=league-info",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "league_name": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get teams list",
+      "method": "GET",
+      "path": "/?path=teams",
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    }
+  ]
+}
