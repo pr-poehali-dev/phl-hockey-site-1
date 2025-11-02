@@ -54,7 +54,7 @@
 
   body {
     font-family: "Roboto", sans-serif;
-    background: linear-gradient(-45deg, #8b2f00, #a03800, #b54200, #6e2500);
+    background: linear-gradient(-45deg, #a64800, #c55500, #d96200, #8f3b00);
     background-size: 400% 400%;
     animation: gradientShift 15s ease infinite;
     color: #fff;
