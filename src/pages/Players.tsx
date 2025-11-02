@@ -86,8 +86,9 @@ const Players = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Все дивизионы</SelectItem>
-                  <SelectItem value="A">Дивизион А</SelectItem>
-                  <SelectItem value="B">Дивизион Б</SelectItem>
+                  <SelectItem value="ПХЛ">ПХЛ</SelectItem>
+                  <SelectItem value="ВХЛ">ВХЛ</SelectItem>
+                  <SelectItem value="ТХЛ">ТХЛ</SelectItem>
                 </SelectContent>
               </Select>
             </div>
