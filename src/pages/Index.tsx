@@ -95,6 +95,7 @@ const Index = () => {
       
       const championsWithLogos = championsData.map((champion: Champion) => {
         const team = teamsData.find((t: Team) => t.name === champion.team_name);
+        console.log('Champion team:', champion.team_name, 'found:', team, 'logo:', team?.logo_url);
         return {
           ...champion,
           team_logo: team?.logo_url
