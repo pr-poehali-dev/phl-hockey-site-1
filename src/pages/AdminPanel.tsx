@@ -41,11 +41,20 @@ interface Match {
   status: string;
 }
 
+interface Champion {
+  id: number;
+  season: string;
+  team_id: number;
+  team_name: string;
+  description?: string;
+}
+
 const AdminPanel = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [teams, setTeams] = useState<Team[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [champions, setChampions] = useState<Champion[]>([]);
   const [leagueInfo, setLeagueInfo] = useState<any>({ league_name: 'PHL', description: '', logo_url: null, social_links: [] });
   const [regulations, setRegulations] = useState('');
   const { toast } = useToast();
@@ -69,15 +78,17 @@ const AdminPanel = () => {
 
   const fetchData = async () => {
     try {
-      const [teamsRes, matchesRes, infoRes, regulationsRes] = await Promise.all([
+      const [teamsRes, matchesRes, championsRes, infoRes, regulationsRes] = await Promise.all([
         fetch(`${API_URL}?path=teams`),
         fetch(`${API_URL}?path=matches`),
+        fetch(`${API_URL}?path=champions`),
         fetch(`${API_URL}?path=league-info`),
         fetch(`${API_URL}?path=regulations`)
       ]);
 
       setTeams(await teamsRes.json());
       setMatches(await matchesRes.json());
+      setChampions(await championsRes.json());
       setLeagueInfo(await infoRes.json());
       const regData = await regulationsRes.json();
       setRegulations(regData.content || '');
@@ -232,10 +243,11 @@ const AdminPanel = () => {
       </div>
 
       <Tabs defaultValue="league" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="league">О лиге</TabsTrigger>
           <TabsTrigger value="teams">Команды</TabsTrigger>
           <TabsTrigger value="matches">Матчи</TabsTrigger>
+          <TabsTrigger value="champions">Чемпионы</TabsTrigger>
           <TabsTrigger value="regulations">Регламент</TabsTrigger>
         </TabsList>
 
@@ -379,6 +391,50 @@ const AdminPanel = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="champions">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Чемпионы лиги</CardTitle>
+              <ChampionDialog teams={teams} onSave={async (data) => {
+                try {
+                  await fetch(`${API_URL}?path=champions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                  });
+                  toast({ title: 'Успешно', description: 'Чемпион добавлен' });
+                  fetchData();
+                } catch (error) {
+                  toast({ title: 'Ошибка', variant: 'destructive' });
+                }
+              }} />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {champions.map((champion) => (
+                  <div key={champion.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <div className="font-semibold">{champion.season} - {champion.team_name}</div>
+                      {champion.description && <div className="text-sm text-muted-foreground">{champion.description}</div>}
+                    </div>
+                    <Button size="sm" variant="destructive" onClick={async () => {
+                      try {
+                        await fetch(`${API_URL}?path=champions&id=${champion.id}`, { method: 'DELETE' });
+                        toast({ title: 'Успешно', description: 'Чемпион удален' });
+                        fetchData();
+                      } catch (error) {
+                        toast({ title: 'Ошибка', variant: 'destructive' });
+                      }
+                    }}>
+                      <Icon name="Trash2" size={16} />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="regulations">
           <Card>
             <CardHeader>
@@ -495,10 +551,21 @@ const SocialLinksManager = ({ socialLinks, onUpdate }: { socialLinks: any[]; onU
 
 const TeamDialog = ({ team, onSave }: { team?: Team; onSave: (data: any) => void }) => {
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState(team || {
+  const [formData, setFormData] = useState({
     name: '', division: 'ПХЛ', games_played: 0, wins: 0, wins_ot: 0,
     losses_ot: 0, losses: 0, goals_for: 0, goals_against: 0, points: 0, logo_url: ''
   });
+
+  useEffect(() => {
+    if (team && open) {
+      setFormData(team);
+    } else if (!team && open) {
+      setFormData({
+        name: '', division: 'ПХЛ', games_played: 0, wins: 0, wins_ot: 0,
+        losses_ot: 0, losses: 0, goals_for: 0, goals_against: 0, points: 0, logo_url: ''
+      });
+    }
+  }, [team, open]);
 
   const handleSave = () => {
     onSave(formData);
@@ -567,9 +634,71 @@ const TeamDialog = ({ team, onSave }: { team?: Team; onSave: (data: any) => void
   );
 };
 
+const ChampionDialog = ({ teams, onSave }: { teams: Team[]; onSave: (data: any) => void }) => {
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    season: '',
+    team_id: teams.length > 0 ? teams[0].id : 0,
+    team_name: teams.length > 0 ? teams[0].name : '',
+    description: ''
+  });
+
+  const handleSave = () => {
+    if (!formData.season || !formData.team_name) {
+      return;
+    }
+    onSave(formData);
+    setOpen(false);
+    setFormData({ season: '', team_id: 0, team_name: '', description: '' });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button><Icon name="Plus" size={18} className="mr-2" />Добавить чемпиона</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Добавить чемпиона</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>Сезон</Label>
+            <Input placeholder="2024-2025" value={formData.season} onChange={(e) => setFormData({ ...formData, season: e.target.value })} />
+          </div>
+          <div>
+            <Label>Команда</Label>
+            <Select 
+              value={String(formData.team_id)} 
+              onValueChange={(val) => {
+                const team = teams.find(t => t.id === parseInt(val));
+                setFormData({ ...formData, team_id: parseInt(val), team_name: team?.name || '' });
+              }}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {teams.map(t => <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Описание</Label>
+            <Textarea 
+              placeholder="Краткое описание сезона..." 
+              value={formData.description} 
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })} 
+            />
+          </div>
+        </div>
+        <Button onClick={handleSave} className="w-full">Сохранить</Button>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const MatchDialog = ({ teams, match, onSave }: { teams: Team[]; match?: Match; onSave: (data: any) => void }) => {
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState(match || {
+  const [formData, setFormData] = useState({
     match_date: new Date().toISOString().slice(0, 16),
     home_team_id: teams.length > 0 ? teams[0].id : 0, 
     away_team_id: teams.length > 1 ? teams[1].id : 0, 
@@ -578,20 +707,30 @@ const MatchDialog = ({ teams, match, onSave }: { teams: Team[]; match?: Match; o
     status: 'Не начался'
   });
 
+  useEffect(() => {
+    if (match && open) {
+      setFormData({
+        ...match,
+        match_date: match.match_date.slice(0, 16)
+      });
+    } else if (!match && open) {
+      setFormData({
+        match_date: new Date().toISOString().slice(0, 16),
+        home_team_id: teams.length > 0 ? teams[0].id : 0,
+        away_team_id: teams.length > 1 ? teams[1].id : 0,
+        home_score: 0,
+        away_score: 0,
+        status: 'Не начался'
+      });
+    }
+  }, [match, open, teams]);
+
   const handleSave = () => {
     if (!formData.home_team_id || !formData.away_team_id) {
       return;
     }
     onSave(formData);
     setOpen(false);
-    setFormData({
-      match_date: new Date().toISOString().slice(0, 16),
-      home_team_id: teams.length > 0 ? teams[0].id : 0,
-      away_team_id: teams.length > 1 ? teams[1].id : 0,
-      home_score: 0,
-      away_score: 0,
-      status: 'Не начался'
-    });
   };
 
   return (

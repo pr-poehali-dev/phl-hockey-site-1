@@ -38,10 +38,18 @@ interface LeagueInfo {
   social_links: Array<{ id: number; platform: string; url: string; icon: string }>;
 }
 
+interface Champion {
+  id: number;
+  season: string;
+  team_name: string;
+  description?: string;
+}
+
 const Index = () => {
   const [leagueInfo, setLeagueInfo] = useState<LeagueInfo | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [champions, setChampions] = useState<Champion[]>([]);
   const [regulations, setRegulations] = useState('');
 
   useEffect(() => {
@@ -50,21 +58,24 @@ const Index = () => {
 
   const fetchData = async () => {
     try {
-      const [infoRes, teamsRes, matchesRes, regulationsRes] = await Promise.all([
+      const [infoRes, teamsRes, matchesRes, championsRes, regulationsRes] = await Promise.all([
         fetch(`${API_URL}?path=league-info`),
         fetch(`${API_URL}?path=teams`),
         fetch(`${API_URL}?path=matches`),
+        fetch(`${API_URL}?path=champions`),
         fetch(`${API_URL}?path=regulations`)
       ]);
 
       const infoData = await infoRes.json();
       const teamsData = await teamsRes.json();
       const matchesData = await matchesRes.json();
+      const championsData = await championsRes.json();
       const regulationsData = await regulationsRes.json();
 
       setLeagueInfo(infoData);
       setTeams(teamsData);
       setMatches(matchesData);
+      setChampions(championsData);
       setRegulations(regulationsData.content || 'Регламент скоро появится');
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -119,9 +130,10 @@ const Index = () => {
       </div>
 
       <Tabs defaultValue="tables" className="mb-12">
-        <TabsList className="grid w-full grid-cols-3 mb-8">
+        <TabsList className="grid w-full grid-cols-4 mb-8">
           <TabsTrigger value="tables">Таблицы дивизионов</TabsTrigger>
           <TabsTrigger value="schedule">Расписание</TabsTrigger>
+          <TabsTrigger value="champions">Чемпионы</TabsTrigger>
           <TabsTrigger value="regulations">Регламент</TabsTrigger>
         </TabsList>
 
@@ -223,6 +235,36 @@ const Index = () => {
                 </div>
               ) : (
                 <p className="text-center text-muted-foreground py-8">Матчи скоро появятся</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="champions">
+          <Card className="animate-scale-in">
+            <CardHeader>
+              <CardTitle className="text-2xl font-['Montserrat']">Чемпионы лиги</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {champions.length > 0 ? (
+                <div className="space-y-4">
+                  {champions.map((champion) => (
+                    <div key={champion.id} className="p-6 border rounded-lg bg-gradient-to-r from-primary/10 to-transparent">
+                      <div className="flex items-center gap-4 mb-2">
+                        <Icon name="Trophy" size={32} className="text-primary" />
+                        <div>
+                          <h3 className="text-2xl font-bold font-['Montserrat']">{champion.season}</h3>
+                          <p className="text-xl font-semibold text-primary">{champion.team_name}</p>
+                        </div>
+                      </div>
+                      {champion.description && (
+                        <p className="text-muted-foreground ml-12 mt-2">{champion.description}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground py-8">Чемпионы скоро появятся</p>
               )}
             </CardContent>
           </Card>

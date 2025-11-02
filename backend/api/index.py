@@ -121,6 +121,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 data = cur.fetchone()
                 result = dict(data) if data else {'content': 'Регламент скоро появится'}
                 
+            elif path == 'champions':
+                cur.execute('SELECT * FROM champions ORDER BY season DESC')
+                result = [dict(row) for row in cur.fetchall()]
+                
             else:
                 result = {'error': 'Unknown path'}
                 
@@ -166,11 +170,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             body_data.get('away_team_id'), body_data.get('home_score', 0),
                             body_data.get('away_score', 0), body_data.get('status', 'Не начался')))
                 conn.commit()
+                
+                if body_data.get('status') in ['Конец матча', 'Конец матча (ОТ)', 'Конец матча (Б)']:
+                    recalculate_team_stats(cur, conn)
+                
                 result = {'success': True}
                 
             elif path == 'regulations':
                 cur.execute('UPDATE regulations SET content = %s, updated_at = CURRENT_TIMESTAMP WHERE id = 1',
                            (body_data.get('content'),))
+                conn.commit()
+                result = {'success': True}
+                
+            elif path == 'champions':
+                cur.execute('INSERT INTO champions (season, team_id, team_name, description) VALUES (%s, %s, %s, %s)',
+                           (body_data.get('season'), body_data.get('team_id'), 
+                            body_data.get('team_name'), body_data.get('description')))
                 conn.commit()
                 result = {'success': True}
                 
@@ -226,6 +241,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
             elif path == 'social-links':
                 cur.execute('DELETE FROM social_links WHERE id = %s', (item_id,))
+                conn.commit()
+                result = {'success': True}
+                
+            elif path == 'champions':
+                cur.execute('DELETE FROM champions WHERE id = %s', (item_id,))
                 conn.commit()
                 result = {'success': True}
                 
