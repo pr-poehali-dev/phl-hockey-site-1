@@ -6,42 +6,42 @@
 
 @layer base {
   :root {
-    --background: 25 100% 50%;
-    --foreground: 0 0% 0%;
+    --background: 25 60% 30%;
+    --foreground: 0 0% 100%;
 
-    --card: 25 100% 45%;
-    --card-foreground: 0 0% 0%;
+    --card: 25 50% 25%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 25 100% 45%;
-    --popover-foreground: 0 0% 0%;
+    --popover: 25 50% 25%;
+    --popover-foreground: 0 0% 100%;
 
     --primary: 0 0% 0%;
-    --primary-foreground: 25 100% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 25 100% 40%;
-    --secondary-foreground: 0 0% 0%;
+    --secondary: 25 40% 20%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 25 80% 35%;
-    --muted-foreground: 0 0% 15%;
+    --muted: 25 30% 20%;
+    --muted-foreground: 0 0% 85%;
 
     --accent: 0 0% 0%;
-    --accent-foreground: 25 100% 50%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 0 0% 0%;
-    --input: 25 100% 40%;
+    --input: 25 40% 20%;
     --ring: 0 0% 0%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 25 100% 45%;
-    --sidebar-foreground: 0 0% 0%;
+    --sidebar-background: 25 50% 25%;
+    --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 0%;
-    --sidebar-primary-foreground: 25 100% 50%;
-    --sidebar-accent: 25 100% 40%;
-    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 25 40% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 0%;
     --sidebar-ring: 0 0% 0%;
   }
@@ -54,10 +54,10 @@
 
   body {
     font-family: "Roboto", sans-serif;
-    background: linear-gradient(-45deg, #cc4400, #dd5500, #ee6600, #bb3300);
+    background: linear-gradient(-45deg, #8b2f00, #a03800, #b54200, #6e2500);
     background-size: 400% 400%;
     animation: gradientShift 15s ease infinite;
-    color: #000;
+    color: #fff;
   }
 
   h1,
