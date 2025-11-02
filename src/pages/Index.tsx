@@ -80,6 +80,11 @@ const Index = () => {
       const matchesWithLogos = matchesData.map((match: Match) => {
         const homeTeam = teamsData.find((t: Team) => t.name === match.home_team_name);
         const awayTeam = teamsData.find((t: Team) => t.name === match.away_team_name);
+        
+        console.log('Match:', match.home_team_name, 'vs', match.away_team_name);
+        console.log('Home team found:', homeTeam, 'logo:', homeTeam?.logo_url);
+        console.log('Away team found:', awayTeam, 'logo:', awayTeam?.logo_url);
+        
         return {
           ...match,
           home_team_logo: homeTeam?.logo_url,
