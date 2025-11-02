@@ -45,6 +45,7 @@ interface Champion {
   season: string;
   team_name: string;
   description?: string;
+  team_logo?: string;
 }
 
 const Index = () => {
@@ -92,8 +93,16 @@ const Index = () => {
         };
       });
       
+      const championsWithLogos = championsData.map((champion: Champion) => {
+        const team = teamsData.find((t: Team) => t.name === champion.team_name);
+        return {
+          ...champion,
+          team_logo: team?.logo_url
+        };
+      });
+      
       setMatches(matchesWithLogos);
-      setChampions(championsData);
+      setChampions(championsWithLogos);
       setRegulations(regulationsData.content || 'Регламент скоро появится');
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -276,9 +285,16 @@ const Index = () => {
                     <div key={champion.id} className="p-6 border rounded-lg bg-gradient-to-r from-primary/10 to-transparent">
                       <div className="flex items-center gap-4 mb-2">
                         <Icon name="Trophy" size={32} className="text-primary" />
-                        <div>
-                          <h3 className="text-2xl font-bold font-['Montserrat']">{champion.season}</h3>
-                          <p className="text-xl font-semibold text-primary">{champion.team_name}</p>
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <h3 className="text-2xl font-bold font-['Montserrat']">{champion.season}</h3>
+                            <div className="flex items-center gap-2">
+                              {champion.team_logo && (
+                                <img src={champion.team_logo} alt={champion.team_name} className="w-6 h-6 object-contain" />
+                              )}
+                              <p className="text-xl font-semibold text-primary">{champion.team_name}</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                       {champion.description && (
