@@ -59,6 +59,30 @@ const AdminPanel = () => {
   const [regulations, setRegulations] = useState('');
   const { toast } = useToast();
 
+  const moveTeam = async (teamId: number, direction: 'up' | 'down') => {
+    const currentIndex = teams.findIndex(t => t.id === teamId);
+    if (currentIndex === -1) return;
+    
+    const newPosition = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (newPosition < 0 || newPosition >= teams.length) return;
+
+    try {
+      await fetch('https://functions.poehali.dev/56674b88-28ed-4eb5-8ca0-3f5b5af78520', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team_id: teamId, new_position: newPosition })
+      });
+      
+      const newTeams = [...teams];
+      [newTeams[currentIndex], newTeams[newPosition]] = [newTeams[newPosition], newTeams[currentIndex]];
+      setTeams(newTeams);
+      
+      toast({ title: 'Успешно', description: 'Позиция команды изменена' });
+    } catch (error) {
+      toast({ title: 'Ошибка', description: 'Не удалось переместить', variant: 'destructive' });
+    }
+  };
+
   const handleLogin = () => {
     if (password === ADMIN_PASSWORD) {
       setIsAuthenticated(true);
@@ -243,11 +267,12 @@ const AdminPanel = () => {
       </div>
 
       <Tabs defaultValue="league" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="league">О лиге</TabsTrigger>
           <TabsTrigger value="teams">Команды</TabsTrigger>
           <TabsTrigger value="matches">Матчи</TabsTrigger>
           <TabsTrigger value="champions">Чемпионы</TabsTrigger>
+          <TabsTrigger value="players">Игроки</TabsTrigger>
           <TabsTrigger value="regulations">Регламент</TabsTrigger>
         </TabsList>
 
@@ -319,6 +344,7 @@ const AdminPanel = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-24">Порядок</TableHead>
                     <TableHead>Команда</TableHead>
                     <TableHead>Дивизион</TableHead>
                     <TableHead className="text-center">И</TableHead>
@@ -333,8 +359,28 @@ const AdminPanel = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {teams.map((team) => (
+                  {teams.map((team, index) => (
                     <TableRow key={team.id}>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => moveTeam(team.id, 'up')}
+                            disabled={index === 0}
+                          >
+                            <Icon name="ChevronUp" size={16} />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => moveTeam(team.id, 'down')}
+                            disabled={index === teams.length - 1}
+                          >
+                            <Icon name="ChevronDown" size={16} />
+                          </Button>
+                        </div>
+                      </TableCell>
                       <TableCell>{team.name}</TableCell>
                       <TableCell>{team.division}</TableCell>
                       <TableCell className="text-center">{team.games_played}</TableCell>
@@ -451,6 +497,17 @@ const AdminPanel = () => {
                 <Icon name="Save" size={18} className="mr-2" />
                 Сохранить
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="players">
+          <Card>
+            <CardHeader>
+              <CardTitle>Управление игроками</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Раздел управления игроками и их статистикой в разработке</p>
             </CardContent>
           </Card>
         </TabsContent>

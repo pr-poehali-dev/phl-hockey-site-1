@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Index from "./pages/Index";
 import AdminPanel from "./pages/AdminPanel";
+import Players from "./pages/Players";
 import NotFound from "./pages/NotFound";
 import Icon from "@/components/ui/icon";
 
@@ -49,6 +50,10 @@ const App = () => {
                       <Icon name="Home" size={20} />
                       <span>Главная</span>
                     </Link>
+                    <Link to="/players" className="hover:opacity-80 transition-opacity flex items-center gap-2">
+                      <Icon name="Users" size={20} />
+                      <span>Игроки</span>
+                    </Link>
                     <Link to="/admin" className="hover:opacity-80 transition-opacity flex items-center gap-2">
                       <Icon name="Settings" size={20} />
                       <span>Админка</span>
@@ -60,6 +65,7 @@ const App = () => {
             
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/players" element={<Players />} />
               <Route path="/admin" element={<AdminPanel />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
