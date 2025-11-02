@@ -30,6 +30,8 @@ interface Match {
   home_score: number;
   away_score: number;
   status: string;
+  home_team_logo?: string;
+  away_team_logo?: string;
 }
 
 interface LeagueInfo {
@@ -74,7 +76,18 @@ const Index = () => {
 
       setLeagueInfo(infoData);
       setTeams(teamsData);
-      setMatches(matchesData);
+      
+      const matchesWithLogos = matchesData.map((match: Match) => {
+        const homeTeam = teamsData.find((t: Team) => t.name === match.home_team_name);
+        const awayTeam = teamsData.find((t: Team) => t.name === match.away_team_name);
+        return {
+          ...match,
+          home_team_logo: homeTeam?.logo_url,
+          away_team_logo: awayTeam?.logo_url
+        };
+      });
+      
+      setMatches(matchesWithLogos);
       setChampions(championsData);
       setRegulations(regulationsData.content || 'Регламент скоро появится');
     } catch (error) {
@@ -214,7 +227,12 @@ const Index = () => {
                           })}
                         </div>
                         <div className="flex items-center gap-6">
-                          <span className="font-medium min-w-[120px] text-right">{match.home_team_name}</span>
+                          <div className="flex items-center gap-2 min-w-[150px] justify-end">
+                            {match.home_team_logo && (
+                              <img src={match.home_team_logo} alt={match.home_team_name} className="w-6 h-6 object-contain" />
+                            )}
+                            <span className="font-medium">{match.home_team_name}</span>
+                          </div>
                           <div className="flex items-center gap-2 min-w-[60px] justify-center">
                             {match.status !== 'Не начался' ? (
                               <span className="text-xl font-bold">{match.home_score} : {match.away_score}</span>
@@ -222,7 +240,12 @@ const Index = () => {
                               <span className="text-muted-foreground">vs</span>
                             )}
                           </div>
-                          <span className="font-medium min-w-[120px]">{match.away_team_name}</span>
+                          <div className="flex items-center gap-2 min-w-[150px]">
+                            <span className="font-medium">{match.away_team_name}</span>
+                            {match.away_team_logo && (
+                              <img src={match.away_team_logo} alt={match.away_team_name} className="w-6 h-6 object-contain" />
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div>{getStatusBadge(match.status)}</div>
