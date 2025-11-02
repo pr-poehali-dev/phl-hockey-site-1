@@ -9,27 +9,12 @@ import Index from "./pages/Index";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 import Icon from "@/components/ui/icon";
-import { Button } from "@/components/ui/button";
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('theme');
-    return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  });
   const [leagueLogo, setLeagueLogo] = useState<string | null>(null);
   const [leagueName, setLeagueName] = useState('PHL');
-
-  useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDark]);
 
   useEffect(() => {
     fetch('https://functions.poehali.dev/6ba303f7-5999-4705-a914-9eea15983942?path=league-info')
@@ -68,14 +53,6 @@ const App = () => {
                       <Icon name="Settings" size={20} />
                       <span>Админка</span>
                     </Link>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => setIsDark(!isDark)}
-                      className="text-primary-foreground hover:bg-primary-foreground/10"
-                    >
-                      <Icon name={isDark ? "Sun" : "Moon"} size={20} />
-                    </Button>
                   </div>
                 </div>
               </div>
