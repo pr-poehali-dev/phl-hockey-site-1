@@ -148,24 +148,22 @@ const Index = () => {
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-12">#</TableHead>
-                          <TableHead>Команда</TableHead>
-                          <TableHead className="text-center">И</TableHead>
-                          <TableHead className="text-center">В</TableHead>
-                          <TableHead className="text-center">ВО</TableHead>
-                          <TableHead className="text-center">ПО</TableHead>
-                          <TableHead className="text-center">П</TableHead>
-                          <TableHead className="text-center">Ш</TableHead>
-                          <TableHead className="text-center">Пр</TableHead>
-                          <TableHead className="text-center font-bold">О</TableHead>
+                        <TableRow className="bg-primary text-primary-foreground">
+                          <TableHead className="w-12 text-primary-foreground">#</TableHead>
+                          <TableHead className="text-primary-foreground">Команда</TableHead>
+                          <TableHead className="text-center text-primary-foreground">И</TableHead>
+                          <TableHead className="text-center text-primary-foreground">В</TableHead>
+                          <TableHead className="text-center text-primary-foreground">П</TableHead>
+                          <TableHead className="text-center text-primary-foreground">Забито</TableHead>
+                          <TableHead className="text-center text-primary-foreground">Пропущено</TableHead>
+                          <TableHead className="text-center font-bold text-primary-foreground">Очки</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {getDivisionTeams(division).map((team, index) => (
-                          <TableRow key={team.id} className="hover:bg-muted/50">
-                            <TableCell className="font-medium">{index + 1}</TableCell>
-                            <TableCell className="font-medium">
+                          <TableRow key={team.id} className="hover:bg-secondary/30 border-b border-primary">
+                            <TableCell className="font-bold">{index + 1}</TableCell>
+                            <TableCell className="font-bold">
                               <div className="flex items-center gap-2">
                                 {team.logo_url && (
                                   <img src={team.logo_url} alt={team.name} className="w-6 h-6 object-contain" />
@@ -173,14 +171,12 @@ const Index = () => {
                                 {team.name}
                               </div>
                             </TableCell>
-                            <TableCell className="text-center">{team.games_played}</TableCell>
-                            <TableCell className="text-center">{team.wins}</TableCell>
-                            <TableCell className="text-center">{team.wins_ot}</TableCell>
-                            <TableCell className="text-center">{team.losses_ot}</TableCell>
-                            <TableCell className="text-center">{team.losses}</TableCell>
-                            <TableCell className="text-center">{team.goals_for}</TableCell>
-                            <TableCell className="text-center">{team.goals_against}</TableCell>
-                            <TableCell className="text-center font-bold text-primary">{team.points}</TableCell>
+                            <TableCell className="text-center font-semibold">{team.games_played}</TableCell>
+                            <TableCell className="text-center font-semibold">{team.wins + team.wins_ot}</TableCell>
+                            <TableCell className="text-center font-semibold">{team.losses + team.losses_ot}</TableCell>
+                            <TableCell className="text-center font-semibold">{team.goals_for}</TableCell>
+                            <TableCell className="text-center font-semibold">{team.goals_against}</TableCell>
+                            <TableCell className="text-center font-bold text-lg">{team.points}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
