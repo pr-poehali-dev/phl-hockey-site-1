@@ -70,6 +70,7 @@ def recalculate_team_stats(cur, conn):
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
     path: str = event.get('queryStringParameters', {}).get('path', '')
+    print(f'Request: {method} {path}')
     
     if method == 'OPTIONS':
         return {
